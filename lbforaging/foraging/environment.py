@@ -6,7 +6,7 @@ from gymnasium import Env
 import gymnasium as gym
 from gymnasium.utils import seeding
 import numpy as np
-
+from typing import List, Tuple, Dict
 
 class Action(Enum):
     NONE = 0
@@ -467,7 +467,8 @@ class ForagingEnv(Env):
         
         return nobs, nreward, ndone, ninfo
 
-    def reset(self, options=None, seed=None):
+    def reset(self, options = None, seed = None):
+        self.seed(seed)
         self.field = np.zeros(self.field_size, np.int32)
         self.spawn_players(self.max_player_level)
         player_levels = sorted([player.level for player in self.players])
@@ -482,7 +483,9 @@ class ForagingEnv(Env):
         nobs, _, _, _ = self._make_gym_obs()
         return nobs, {}
 
-    def step(self, actions):
+    def step(
+        self, actions: List[Action]
+    ) -> Tuple[List[np.ndarray], List[float], List[bool], List[bool], Dict]:
         self.current_step += 1
 
         for p in self.players:
@@ -572,7 +575,11 @@ class ForagingEnv(Env):
         for p in self.players:
             p.score += p.reward
 
-        return self._make_gym_obs()
+        obs, rewards, _, _, = self._make_gym_obs()
+        term = self.n_agents * [self.field.sum() == 0]
+        trunc = self.n_agents * [self._max_episode_steps <= self.current_step]
+
+        return obs, rewards, term, trunc, {}
 
     def _init_render(self):
         from .rendering import Viewer
