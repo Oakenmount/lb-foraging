@@ -132,42 +132,31 @@ class Viewer(object):
         return arr if return_rgb_array else self.isopen
 
     def _draw_grid(self):
+        # Create a batch to hold all grid lines
         batch = pyglet.graphics.Batch()
-        # vertical lines
-        for r in range(self.rows + 1):
-            batch.add(
-                2,
-                gl.GL_LINES,
-                None,
-                (
-                    "v2f",
-                    (
-                        0, # LEFT X
-                        (self.grid_size + 1) * r + 1, # Y
-                        (self.grid_size + 1) * self.cols, # RIGHT X
-                        (self.grid_size + 1) * r + 1, # Y
-                    ),
-                ),
-                ("c3B", (*_BLACK, *_BLACK)),
-            )
+        lines = []
 
-        # horizontal lines
-        for c in range(self.cols + 1):
-            batch.add(
-                2,
-                gl.GL_LINES,
-                None,
-                (
-                    "v2f",
-                    (
-                        (self.grid_size + 1) * c + 1, # X
-                        0, # BOTTOM Y
-                        (self.grid_size + 1) * c + 1, # X
-                        (self.grid_size + 1) * self.rows, # TOP X
-                    ),
-                ),
-                ("c3B", (*_BLACK, *_BLACK)),
+        # Draw vertical lines
+        for r in range(self.rows + 1):
+            l = pyglet.shapes.Line(
+                0, (self.grid_size + 1) * r + 1,  # LEFT X, Y
+                (self.grid_size + 1) * self.cols, (self.grid_size + 1) * r + 1,  # RIGHT X, Y
+                color=_BLACK,
+                batch=batch
             )
+            lines.append(l)
+
+        # Draw horizontal lines
+        for c in range(self.cols + 1):
+            l = pyglet.shapes.Line(
+                (self.grid_size + 1) * c + 1, 0,  # X, BOTTOM Y
+                (self.grid_size + 1) * c + 1, (self.grid_size + 1) * self.rows,  # X, TOP Y
+                color=_BLACK,
+                batch=batch
+            )
+            lines.append(l)
+
+        # Draw the batch
         batch.draw()
 
     def _draw_food(self, env):
@@ -213,24 +202,34 @@ class Viewer(object):
             self._draw_badge(*p.position, p.level)
 
     def _draw_badge(self, row, col, level):
-        resolution = 6
+        resolution = 30
         radius = self.grid_size / 5
 
         badge_x = col * (self.grid_size + 1) + (3 / 4) * (self.grid_size + 1)
         badge_y = self.height - (self.grid_size + 1) * (row + 1) + (1 / 4) * (self.grid_size + 1)
 
-        # make a circle
-        verts = []
-        for i in range(resolution):
-            angle = 2 * math.pi * i / resolution
-            x = radius * math.cos(angle) + badge_x
-            y = radius * math.sin(angle) + badge_y
-            verts += [x, y]
-        circle = pyglet.graphics.vertex_list(resolution, ("v2f", verts))
-        glColor3ub(*_WHITE)
-        circle.draw(GL_POLYGON)
-        glColor3ub(*_BLACK)
-        circle.draw(GL_LINE_LOOP)
+
+        # Draw outline circle
+        circle = pyglet.shapes.Circle(
+            x=badge_x,
+            y=badge_y,
+            radius=radius,
+            color=_BLACK,
+        )
+        circle.opacity = 255  # Set opacity to maximum
+        circle.draw()
+
+        # Draw filled circle
+        circle = pyglet.shapes.Circle(
+            x=badge_x,
+            y=badge_y,
+            radius=radius-1,
+            color=_WHITE
+        )
+        circle.opacity = 255  # Set opacity to maximum
+        circle.draw()
+
+        # Draw level label
         label = pyglet.text.Label(
             str(level),
             font_name="Times New Roman",
@@ -240,6 +239,6 @@ class Viewer(object):
             y=badge_y + 2,
             anchor_x="center",
             anchor_y="center",
-            color=(*_BLACK, 255),
+            color=(0,0,0,255)
         )
         label.draw()
