@@ -6,7 +6,7 @@ from gymnasium import Env
 import gymnasium as gym
 from gymnasium.utils import seeding
 import numpy as np
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Optional
 
 class Action(Enum):
     NONE = 0
@@ -80,7 +80,7 @@ class ForagingEnv(Env):
         field_size,
         max_food,
         sight,
-        max_episode_steps,
+        max_steps: Optional[int],
         force_coop,
         normalize_reward=True,
         grid_observation=False,
@@ -103,7 +103,7 @@ class ForagingEnv(Env):
 
         self._rendering_initialized = False
         self._valid_actions = None
-        self._max_episode_steps = max_episode_steps
+        self._max_episode_steps = max_steps
 
         self._normalize_reward = normalize_reward
         self._grid_observation = grid_observation
